@@ -1,0 +1,37 @@
+window.addEventListener('keyup', function(event) { Key.onKeyup(event); }, false);
+window.addEventListener('keydown', function(event) { Key.onKeydown(event); }, false);
+
+
+var Key =
+  {
+    _pressed: {},
+
+    SPACE      : 32,
+    LEFTARROW  : 37,
+    UPARROW    : 38,
+    RIGHTARROW : 39,
+    DOWNARROW  : 40,
+    A          : 65,
+    C          : 67,
+    D          : 68,
+    F          : 70,
+    H          : 72,
+    M          : 77,
+    R          : 82,
+    S          : 83,
+    W          : 87,
+    Z          : 90,
+
+    isDown: function(keyCode) {
+      return this._pressed[keyCode];
+    },
+
+    onKeydown: function(event) {
+      this._pressed[event.keyCode] = true;
+    },
+
+    onKeyup: function(event) {
+      delete this._pressed[event.keyCode];
+    }
+  };
+

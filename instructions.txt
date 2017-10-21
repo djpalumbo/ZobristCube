@@ -1,0 +1,31 @@
+============
+REQUIREMENTS
+============
+Create a board game. It must load in object models. It must use raycasting to
+  detect what piece the mouse clicked on.
+
+You need sound effects, and possibly music.
+
+
+====
+TODO
+====
+Model the rest of the blocks
+
+Create a box, into which they are to be arranged
+
+Block movements using mouse
+  Be able to drag and drop? (Hard mode)
+    Or maybe just click once, then again to place
+
+Create controls for rotating blocks
+
+On-screen timer
+  Stops when blocks are in an acceptable arrangement
+
+
+==========
+ADDITIONAL
+==========
+Level select?
+  Get at least a handful out of the book
