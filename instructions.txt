@@ -12,15 +12,15 @@ TODO
 ====
 Initial arrangement of pieces
 
-Create a box, into which they are to be arranged
+Create a box/area, into which they are to fit
+
+Create controls for rotating blocks
 
 Block movements using mouse
   Be able to drag and drop? (Hard mode)
     Or maybe just click once, then again to place
 
-Create controls for rotating blocks
-
-On-screen timer
+On-screen timer (stopwatch)
   Stops when blocks are in an acceptable arrangement
 
 
@@ -29,3 +29,5 @@ ADDITIONAL
 ==========
 Level select?
   Get at least a handful out of the book
+
+Cache levels completed with completion times

@@ -17,7 +17,6 @@ var plane;
 var pieces = [];
 var scale = 4;
 var space = 2*scale;
-var delta = 0.015625; // Ground distance pad for correct shadows
 
 var help = false, helpRest = false;
 
@@ -34,37 +33,11 @@ function createPieces(lvl)
   }
 }
 
-function addPiece(piece, x, z)
-{
-  var loader = new THREE.OBJLoader();
-
-  var mat = new THREE.MeshStandardMaterial({color: colors[piece], opacity: 0.75,
-    transparent: true});
-
-  loader.load("models/" + piece + ".obj", function (object)
-    {
-      pieces.push(object);
-      object.scale.set(scale, scale, scale);
-      object.position.y = scale + delta;
-      object.position.x = x;
-      object.position.z = z;
-
-      object.name = piece;
-
-      // Note: object.children[0] is the THREE.Mesh
-      object.children[0].material = mat;
-      object.children[0].castShadow = true;
-      object.children[0].receiveShadow = true;
-
-      scene.add(object);
-    });
-}
-
 function initGame()
 {
   scene = new THREE.Scene();
 
-  createPlane();
+  createTable();
 
   populateLevels();
   buildLevel(0); // Testing on easiest level for now...
@@ -169,7 +142,7 @@ function addLight()
   light.shadow.mapSize.width = 2048;
   light.shadow.mapSize.height = 2048;
 
-  light.position.set(0, 50, 0);
+  light.position.set(0, 100, 0);
 
   scene.add(light);
 
@@ -182,8 +155,8 @@ function addLight()
 
 function createPlane()
 {
-  var width  = 30*scale;
-  var height = 30*scale;
+  var width  = 35*scale;
+  var height = 35*scale;
 
   var planeColor = 0x4BD121;
 
@@ -202,7 +175,7 @@ function setupCamera()
     window.innerWidth / window.innerHeight, 0.1, 1000);
 
   camera.rotation.x = (Math.PI / 2);
-  camera.position.set(-45, 100, 75);
+  camera.position.set(0, 150, 150);
 }
 
 function createControls()
@@ -219,24 +192,39 @@ function keyboardControls()
     if (!helpRest) { help = !help; }
 }
 
+function createTable()
+{
+  var mtlLoader = new THREE.MTLLoader();
+  mtlLoader.setPath("models/");
+  mtlLoader.load("table.mtl",
+    function (materials)
+    {
+      materials.preload();
+
+      var objLoader = new THREE.OBJLoader();
+      objLoader.setMaterials(materials);
+      objLoader.setPath("models/");
+      objLoader.load("table.obj",
+        function (object)
+        {
+          object.scale.set(scale/2, scale/2, scale/2);
+          object.position.x = -75*scale/2;
+          object.position.y = -75*scale/2 + 1.375;
+          object.position.z = -90;
+
+          object.name = "Table";
+
+          object.children[0].castShadow = true;
+          object.children[0].receiveShadow = true;
+
+          scene.add(object);
+        });
+    });
+}
+
 function populateLevels()
 {
   level.push({pcs: "drstuv2", l: 3, w: 3, h: 3, solns: 1056});
-}
-
-function parseLevelPcs(pcs)
-{
-  // This is a simple function now, using each index of the pcs string to
-  //  identify the correct pieces. However, the parsing job becomes slightly
-  //  more complicated later on in the codebook when it starts referring to
-  //  the sets of 4- or 5-polycubes using '-' or '+' characters.
-
-  var pieceList = [];
-
-  for (var i = 0; i < pcs.length; i++)
-    pieceList.push(pcs.charAt(i));
-
-  return pieceList;
 }
 
 function buildLevel(lvl)
@@ -275,6 +263,46 @@ function populateColors()
   colors["z"] = "tan";
   colors["2"] = "tan";
   colors["1"] = "tan";
+}
+
+function parseLevelPcs(pcs)
+{
+  // This is a simple function now, using each index of the pcs string to
+  //  identify the correct pieces. However, the parsing job becomes slightly
+  //  more complicated later on in the codebook when it starts referring to
+  //  the sets of 4- or 5-polycubes using '-' or '+' characters.
+
+  var pieceList = [];
+
+  for (var i = 0; i < pcs.length; i++)
+    pieceList.push(pcs.charAt(i));
+
+  return pieceList;
+}
+
+function addPiece(piece, x, z)
+{
+  var loader = new THREE.OBJLoader();
+
+  loader.load("models/" + piece + ".obj", function (object)
+    {
+      pieces.push(object);
+      object.scale.set(scale, scale, scale);
+      object.position.y = 0;
+      object.position.x = x;
+      object.position.z = z;
+
+      object.name = piece;
+
+      // Note: object.children[0] is the THREE.Mesh
+      object.children[0].material = new THREE.MeshStandardMaterial(
+        {color: colors[piece], opacity: 0.5, transparent: true});
+
+      object.children[0].castShadow = true;
+      object.children[0].receiveShadow = true;
+
+      scene.add(object);
+    });
 }
 
 function helpMenu()
