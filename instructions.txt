@@ -10,7 +10,7 @@ You need sound effects, and possibly music.
 ====
 TODO
 ====
-Model the rest of the blocks
+Initial arrangement of pieces
 
 Create a box, into which they are to be arranged
 

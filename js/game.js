@@ -10,20 +10,54 @@ var mouse;
 var intersects;
 var current;
 
+var level = [];
+
 var plane;
 
 var pieces = [];
 var scale = 4;
+var space = 2*scale;
+var delta = 0.015625; // Ground distance pad for correct shadows
 
 var help = false, helpRest = false;
 
-var color = 0x48c469;
+var colors = [];
 
 
-function prettyColors()
+function createPieces(lvl)
 {
-  // Do something with this later
-  return color;
+  var pieceList = parseLevelPcs(level[lvl].pcs);
+
+  for (var i = 0; i < pieceList.length; i++)
+  {
+    addPiece(pieceList[i], i*2*space - 6*space, i*2*space - 6*space);
+  }
+}
+
+function addPiece(piece, x, z)
+{
+  var loader = new THREE.OBJLoader();
+
+  var mat = new THREE.MeshStandardMaterial({color: colors[piece], opacity: 0.75,
+    transparent: true});
+
+  loader.load("models/" + piece + ".obj", function (object)
+    {
+      pieces.push(object);
+      object.scale.set(scale, scale, scale);
+      object.position.y = scale + delta;
+      object.position.x = x;
+      object.position.z = z;
+
+      object.name = piece;
+
+      // Note: object.children[0] is the THREE.Mesh
+      object.children[0].material = mat;
+      object.children[0].castShadow = true;
+      object.children[0].receiveShadow = true;
+
+      scene.add(object);
+    });
 }
 
 function initGame()
@@ -31,8 +65,9 @@ function initGame()
   scene = new THREE.Scene();
 
   createPlane();
-  addPiece("A");
-  // addPiece("B");
+
+  populateLevels();
+  buildLevel(0); // Testing on easiest level for now...
 
   setupCamera();
   setupRenderer();
@@ -80,17 +115,17 @@ function render()
   {
     if (current != intersects[0].object)
     {
-      if (current) // Set color back to normal
-        current.material.color.set(0xff0000);
+      if (current) // Set features back to normal when not looking at it
+        current.material.transparent = true;
 
       current = intersects[0].object;
     }
-    else // Set a distinguishing color
-      current.material.color.set(prettyColors());
+    else // Make selected piece noticeable
+      current.material.transparent = false;
   }
-  else if (current) // Set color back to normal when not looking at anything
+  else if (current) // Set features back to normal when not looking at anything
   {
-    current.material.color.set(0xff0000);
+    current.material.transparent = true;
     current = null;
   }
 
@@ -147,8 +182,8 @@ function addLight()
 
 function createPlane()
 {
-  var width  = 20*scale;
-  var height = 20*scale;
+  var width  = 30*scale;
+  var height = 30*scale;
 
   var planeColor = 0x4BD121;
 
@@ -167,7 +202,7 @@ function setupCamera()
     window.innerWidth / window.innerHeight, 0.1, 1000);
 
   camera.rotation.x = (Math.PI / 2);
-  camera.position.set(50, 50, 50);
+  camera.position.set(-45, 100, 75);
 }
 
 function createControls()
@@ -177,42 +212,69 @@ function createControls()
   //   controls.enabled = false;
 }
 
-function addPiece(piece)
-{
-  var loader = new THREE.OBJLoader();
-
-  var mat = new THREE.MeshLambertMaterial({color: 0xff0000});
-
-  loader.load('models/cube.obj', function (object)
-    {
-      pieces.push(object);
-      object.scale.set(scale, scale, scale);
-      object.position.y = scale;
-
-      object.name = "" + piece;
-
-      console.log(object);
-
-      object.traverse(function(child)
-        {
-          if (child instanceof THREE.Mesh)
-          {
-            child.material = mat;
-
-            child.castShadow = true;
-            child.receiveShadow = true;
-          }
-        });
-
-      scene.add(object);
-    });
-}
-
 function keyboardControls()
 {
   // Show help menu
   if (Key.isDown(Key.H))
     if (!helpRest) { help = !help; }
+}
+
+function populateLevels()
+{
+  level.push({pcs: "drstuv2", l: 3, w: 3, h: 3, solns: 1056});
+}
+
+function parseLevelPcs(pcs)
+{
+  // This is a simple function now, using each index of the pcs string to
+  //  identify the correct pieces. However, the parsing job becomes slightly
+  //  more complicated later on in the codebook when it starts referring to
+  //  the sets of 4- or 5-polycubes using '-' or '+' characters.
+
+  var pieceList = [];
+
+  for (var i = 0; i < pcs.length; i++)
+    pieceList.push(pcs.charAt(i));
+
+  return pieceList;
+}
+
+function buildLevel(lvl)
+{
+  populateColors();
+  createPieces(lvl);
+}
+
+function populateColors()
+{
+  colors["a"] = "red";
+  colors["j"] = "red";
+  colors["l"] = "red";
+  colors["m"] = "red";
+  colors["o"] = "red";
+
+  colors["f"] = "blue";
+  colors["g"] = "blue";
+  colors["h"] = "blue";
+  colors["k"] = "blue";
+  colors["n"] = "blue";
+
+  colors["b"] = "yellow";
+  colors["c"] = "yellow";
+  colors["d"] = "yellow";
+  colors["e"] = "yellow";
+  colors["i"] = "yellow";
+
+  colors["r"] = "green";
+  colors["t"] = "green";
+  colors["u"] = "green";
+
+  colors["s"] = "tan";
+  colors["v"] = "tan";
+  colors["w"] = "tan";
+  colors["z"] = "tan";
+  colors["2"] = "tan";
+  colors["1"] = "tan";
 }
 
 function helpMenu()
