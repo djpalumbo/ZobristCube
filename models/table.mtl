@@ -9,4 +9,4 @@ Ka 0.2 0.2 0.2
 Kd 1.0 1.0 1.0
 Ks 0.0 0.0 0.0
 Ns 0.0
-map_Kd table.png
+map_Kd ../images/table.png

@@ -10,15 +10,17 @@ You need sound effects, and possibly music.
 ====
 TODO
 ====
-Initial arrangement of pieces
+Store locations of each piece/poly
 
-Create a box/area, into which they are to fit
+Function to determine location of each poly of each piece
+  Use this to avoid conflicts in spatial arrangement w/ board or pieces.
 
-Create controls for rotating blocks
+Cannot exit selection unless piece is placed fully within/fully outside the play
+area. An on-screen message should appear if there is any discrepancy.
 
-Block movements using mouse
-  Be able to drag and drop? (Hard mode)
-    Or maybe just click once, then again to place
+Movement directions based of the camera angle.
+
+Fix controls for block rotations
 
 On-screen timer (stopwatch)
   Stops when blocks are in an acceptable arrangement
@@ -27,7 +29,12 @@ On-screen timer (stopwatch)
 ==========
 ADDITIONAL
 ==========
-Level select?
-  Get at least a handful out of the book
+Level select
+
+Enable play with non-3x3x3 boards
+
+Initial arrangement of pieces (improve)
 
 Cache levels completed with completion times
+
+Drag and drop pieces using the mouse
