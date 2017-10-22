@@ -10,17 +10,16 @@ You need sound effects, and possibly music.
 ====
 TODO
 ====
-Store locations of each piece/poly
-
 Function to determine location of each poly of each piece
   Use this to avoid conflicts in spatial arrangement w/ board or pieces.
 
+Store locations of each piece's polys locally
+
+Store locations of each piece's polys globally (single large grid)
+  This will need to be done during piece placement
+
 Cannot exit selection unless piece is placed fully within/fully outside the play
 area. An on-screen message should appear if there is any discrepancy.
-
-Movement directions based of the camera angle.
-
-Fix controls for block rotations
 
 On-screen timer (stopwatch)
   Stops when blocks are in an acceptable arrangement
@@ -29,6 +28,9 @@ On-screen timer (stopwatch)
 ==========
 ADDITIONAL
 ==========
+Movement directions based of the camera angle
+  Then enable full rotation of camera
+
 Level select
 
 Enable play with non-3x3x3 boards
@@ -38,3 +40,5 @@ Initial arrangement of pieces (improve)
 Cache levels completed with completion times
 
 Drag and drop pieces using the mouse
+
+Fix weird 'bump' that happens when initially moving the camera

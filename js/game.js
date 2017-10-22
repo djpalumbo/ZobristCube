@@ -15,6 +15,7 @@ var level = [];
 var currLvl;
 
 var playArea = [];
+var boardArr = [];
 var board;
 
 var pieces = [];
@@ -27,13 +28,156 @@ var mode = "M"; // "M" = movement, "R" = rotation
 var w, w_, a, a_, s, s_, d, d_, spacebar, spacebar_, h, h_;
 w_ = a_ = s_ = d_ = spacebar_ = h_ = false;
 
+var rtns = []; // A graph of possible rotations from any particular position
+
 var help = false;
 
 
+function createPlayArea(lvl)
+{
+  // Actual board mesh, a visual aid for the player
+  board = new THREE.Mesh(new THREE.BoxGeometry(level[lvl].z*space,
+    level[lvl].x*space, scale), new THREE.MeshLambertMaterial({color:
+      0xffffff}));
+
+  board.castShadow = board.receiveShadow = true;
+
+  board.position.y = -(scale/2 + 0.015625);
+  board.rotation.x = 3*Math.PI/2;
+
+  scene.add(board);
+
+  // Matrix that will help determine when cube is finished
+  for (var i = 0; i < level[lvl].y; i++)
+  {
+    boardArr.push([]);
+
+    for (var j = 0; j < level[lvl].x; j++)
+    {
+      boardArr[i].push([]);
+
+      for (var k = 0; k < level[lvl].z; k++)
+        boardArr[i][j].push(false);
+    }
+  }
+}
+
+function getInitLocs()
+{
+  ;
+}
+
+function addPiece(piece, x, z)
+{
+  var loader = new THREE.OBJLoader();
+
+  loader.load("models/" + piece + ".obj", function (object)
+    {
+      pieces.push(object);
+      object.scale.set(scale, scale, scale);
+      object.position.y = 0;
+      object.position.x = x;
+      object.position.z = z;
+
+      object.name = piece;
+
+      // Note: object.children[0] is the THREE.Mesh
+      object.children[0].material = new THREE.MeshStandardMaterial(
+        {color: attr[piece].color, opacity: 0.5, transparent: true});
+
+      object.children[0].castShadow = true;
+      object.children[0].receiveShadow = true;
+
+      object.children[0].rotation.y = 3*Math.PI/2;
+
+      object.rotn = 0;
+      object.polyLocs = attr[object.name].dimens;
+      getPolyLocs(object);
+
+      scene.add(object);
+    });
+}
+
+function getPolyLocs(piece)
+{
+  console.log("Piece " + piece.name + ":");
+  var str = "";
+
+  for (var i = 0; i < piece.polyLocs.length; i++)
+  {
+    for (var j = 0; j < piece.polyLocs[i].length; j++)
+    {
+      for (var k = 0; k < piece.polyLocs[i][j].length; k++)
+      {
+        str += (piece.polyLocs[i][j][k] ? "X " : "O ");
+
+        // Do important things
+      }
+
+      str += "\n";
+    }
+
+    str += "\n";
+  }
+
+  console.log(str);
+}
+
+function rotatePiece(dir)
+{
+  switch (dir)
+  {
+    case "FW":
+      selection.parent.rotn = rtns[selection.parent.rotn].FW;
+      break;
+    case "BK":
+      selection.parent.rotn = rtns[selection.parent.rotn].BK;
+      break;
+    case "LF":
+      selection.parent.rotn = rtns[selection.parent.rotn].LF;
+      break;
+    case "RT":
+      selection.parent.rotn = rtns[selection.parent.rotn].RT;
+      break;
+  }
+
+  selection.parent.rotation.set(rtns[selection.parent.rotn].x,
+                                rtns[selection.parent.rotn].y,
+                                rtns[selection.parent.rotn].z);
+
+  // Set new position
+  // If new position is invalid (underground, on other piece),
+  //   then raise y position
+}
+
+function movePiece(dir)
+{
+  switch (dir)
+  {
+    case "FW":
+      selection.parent.position.z -= space;
+      break;
+    case "BK":
+      selection.parent.position.z += space;
+      break;
+    case "LF":
+      selection.parent.position.x -= space;
+      break;
+    case "RT":
+      selection.parent.position.x += space;
+      break;
+  }
+
+  console.log("M: (" + selection.parent.position.x + ", "
+    + selection.parent.position.y + ", "
+    + selection.parent.position.z + ")");
+}
+
 function deselectPiece()
 {
-  // Check whether or not position is valid (i.e. not halfway on/off board)
+  // Check whether or not position is valid (i.e. halfway on/off board = bad)
 
+  // If OK, then deselect
   selection = null;
 }
 
@@ -53,6 +197,8 @@ function initGame()
   addLight();
 
   setupRenderer();
+
+  populateRotations();
 
   createControls();
   setupRaycaster();
@@ -324,35 +470,6 @@ function buildLevel()
   createPieces(currLvl);
 }
 
-function createPlayArea(lvl)
-{
-  // Actual board mesh, a visual aid for the player
-  board = new THREE.Mesh(new THREE.BoxGeometry(level[lvl].z*space,
-    level[lvl].x*space, scale), new THREE.MeshLambertMaterial({color:
-      0xffffff}));
-
-  board.castShadow = board.receiveShadow = true;
-
-  board.position.y = -(scale/2 + 0.015625);
-  board.rotation.x = 3*Math.PI/2;
-
-  scene.add(board);
-
-  // Matrix that will help determine when cube is finished
-  for (var i = 0; i < level[lvl].y; i++)
-  {
-    playArea.push([]);
-
-    for (var j = 0; j < level[lvl].x; j++)
-    {
-      playArea[i].push([]);
-
-      for (var k = 0; k < level[lvl].z; k++)
-        playArea[i][j].push(false);
-    }
-  }
-}
-
 function populateAttributes()
 {
   var X = true, O = false;
@@ -543,134 +660,39 @@ function createPieces(lvl)
     addPiece(pieceList[i], i*3*space - 9*space, -6*space);
 }
 
-function movePiece(dir)
+function populateRotations()
 {
-  switch (dir)
-  {
-    case "FW":
-      selection.parent.position.z -= space;
-      break;
-    case "BK":
-      selection.parent.position.z += space;
-      break;
-    case "LF":
-      selection.parent.position.x -= space;
-      break;
-    case "RT":
-      selection.parent.position.x += space;
-      break;
-  }
+  var pi = Math.PI;
 
-  console.log("M: (" + selection.parent.position.x + ", "
-    + selection.parent.position.y + ", "
-    + selection.parent.position.z + ")");
-}
+  rtns.push({x:0,      y:0,      z:0,      RT:1,  LF:3,  BK:4,  FW:12}); //0
+  rtns.push({x:0,      y:3*pi/2, z:0,      RT:2,  LF:0,  BK:16, FW:20}); //1
+  rtns.push({x:0,      y:pi,     z:0,      RT:3,  LF:1,  BK:14, FW:6 }); //2
+  rtns.push({x:0,      y:pi/2,   z:0,      RT:0,  LF:2,  BK:22, FW:18}); //3
 
-// Currently, these are buggy due to difficulties with 3d rotations
-function rotatePiece(dir)
-{
-  switch (dir)
-  {
-    case "FW":
-      selection.parent.rotation.x -= Math.PI/2;
-      break;
-    case "BK":
-      selection.parent.rotation.x += Math.PI/2;
-      break;
-    case "LF":
-      if (selection.parent.rotation.x === 0)
-        selection.parent.rotation.y += Math.PI/2;
-      else if (selection.parent.rotation.x === Math.PI/2)
-        selection.parent.rotation.z -= Math.PI/2;
-      else if (selection.parent.rotation.x === Math.PI)
-        selection.parent.rotation.y -= Math.PI/2;
-      else
-        selection.parent.rotation.z += Math.PI/2;
-      break;
-    case "RT":
-      if (selection.parent.rotation.x === 0)
-        selection.parent.rotation.y -= Math.PI/2;
-      else if (selection.parent.rotation.x === Math.PI/2)
-        selection.parent.rotation.z += Math.PI/2;
-      else if (selection.parent.rotation.x === Math.PI)
-        selection.parent.rotation.y += Math.PI/2;
-      else
-        selection.parent.rotation.z -= Math.PI/2;
-      break;
-  }
+  rtns.push({x:pi/2,   y:0,      z:0,      RT:5,  LF:7,  BK:8,  FW:0 }); //4
+  rtns.push({x:pi/2,   y:0,      z:pi/2,   RT:6,  LF:4,  BK:17, FW:23}); //5
+  rtns.push({x:pi/2,   y:0,      z:pi,     RT:7,  LF:5,  BK:2,  FW:10}); //6
+  rtns.push({x:pi/2,   y:0,      z:3*pi/2, RT:4,  LF:6,  BK:21, FW:19}); //7
 
-  // Rotations must be in:  0 ≤ x,y,z < 2π
-  if (selection.parent.rotation.x >= 2*Math.PI)
-    selection.parent.rotation.x = 0;
-  else if (selection.parent.rotation.x <= -Math.PI/2)
-    selection.parent.rotation.x = 3*Math.PI/2;
-  if (selection.parent.rotation.y >= 2*Math.PI)
-    selection.parent.rotation.y = 0;
-  else if (selection.parent.rotation.y <= -Math.PI/2)
-    selection.parent.rotation.y = 3*Math.PI/2;
-  if (selection.parent.rotation.z >= 2*Math.PI)
-    selection.parent.rotation.z = 0;
-  else if (selection.parent.rotation.z <= -Math.PI/2)
-    selection.parent.rotation.z = 3*Math.PI/2;
+  rtns.push({x:pi,     y:0,      z:0,      RT:9,  LF:11, BK:12, FW:4 }); //8
+  rtns.push({x:pi,     y:pi/2,   z:0,      RT:10, LF:8,  BK:18, FW:22}); //9
+  rtns.push({x:pi,     y:pi,     z:0,      RT:11, LF:9,  BK:6,  FW:14}); //10
+  rtns.push({x:pi,     y:3*pi/2, z:0,      RT:8,  LF:10, BK:20, FW:16}); //11
 
-  console.log("R: (" + selection.parent.rotation.x + ", "
-    + selection.parent.rotation.y + ", "
-    + selection.parent.rotation.z + ")");
-}
+  rtns.push({x:3*pi/2, y:0,      z:0,      RT:13, LF:15, BK:0,  FW:8 }); //12
+  rtns.push({x:3*pi/2, y:0,      z:3*pi/2, RT:14, LF:12, BK:19, FW:21}); //13
+  rtns.push({x:3*pi/2, y:0,      z:pi,     RT:15, LF:13, BK:10, FW:2 }); //14
+  rtns.push({x:3*pi/2, y:0,      z:pi/2,   RT:12, LF:14, BK:23, FW:17}); //15
 
-function getPolyLocs(piece)
-{
-  console.log("Piece " + piece.name + ":");
-  var str = "";
+  rtns.push({x:pi,     y:3*pi/2, z:pi/2,   RT:17, LF:19, BK:11, FW:1 }); //16
+  rtns.push({x:pi,     y:0,      z:pi/2,   RT:18, LF:16, BK:15, FW:5 }); //17
+  rtns.push({x:pi,     y:pi/2,   z:pi/2,   RT:19, LF:17, BK:3,  FW:9 }); //18
+  rtns.push({x:pi,     y:pi,     z:pi/2,   RT:16, LF:18, BK:7,  FW:13}); //19
 
-  for (var i = 0; i < piece.polyLocs.length; i++)
-  {
-    for (var j = 0; j < piece.polyLocs[i].length; j++)
-    {
-      for (var k = 0; k < piece.polyLocs[i][j].length; k++)
-      {
-        str += (piece.polyLocs[i][j][k] ? "X " : "O ");
-
-        // Do important things
-      }
-
-      str += "\n";
-    }
-
-    str += "\n";
-  }
-
-  console.log(str);
-}
-
-function addPiece(piece, x, z)
-{
-  var loader = new THREE.OBJLoader();
-
-  loader.load("models/" + piece + ".obj", function (object)
-    {
-      pieces.push(object);
-      object.scale.set(scale, scale, scale);
-      object.position.y = 0;
-      object.position.x = x;
-      object.position.z = z;
-
-      object.name = piece;
-
-      // Note: object.children[0] is the THREE.Mesh
-      object.children[0].material = new THREE.MeshStandardMaterial(
-        {color: attr[piece].color, opacity: 0.5, transparent: true});
-
-      object.children[0].castShadow = true;
-      object.children[0].receiveShadow = true;
-
-      object.children[0].rotation.y = 3*Math.PI/2;
-
-      object.polyLocs = attr[object.name].dimens;
-      getPolyLocs(object);
-
-      scene.add(object);
-    });
+  rtns.push({x:0,      y:3*pi/2, z:pi/2,   RT:21, LF:23, BK:1,  FW:11}); //20
+  rtns.push({x:0,      y:pi,     z:pi/2,   RT:22, LF:20, BK:13, FW:7 }); //21
+  rtns.push({x:0,      y:pi/2,   z:pi/2,   RT:23, LF:21, BK:9,  FW:3 }); //22
+  rtns.push({x:0,      y:0,      z:pi/2,   RT:20, LF:22, BK:5,  FW:15}); //23
 }
 
 function updateInfoPane()
@@ -706,10 +728,10 @@ function helpMenu()
       + "<br>&nbspbe used to operate"
       + "<br>&nbspeach mode</br>"
 
-      + "<br>Press H to close this help menu";
+      + "<br>[H] will close this menu";
   }
   else
     document.getElementById('help').innerHTML =
-      "Press H to toggle the help menu";
+      "Press [H] for help";
 }
 
