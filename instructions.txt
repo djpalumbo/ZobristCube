@@ -10,12 +10,10 @@ You need sound effects, and possibly music.
 ====
 TODO
 ====
-Use getNewPolyLocs to avoid conflicts in spatial arrangement w/ board or pieces.
+Allow pieces to fall, even when not selected
 
 On-screen timer (stopwatch)
   Stops when blocks are in an acceptable arrangement
-
-Sounds
 
 
 ==========
