@@ -10,19 +10,12 @@ You need sound effects, and possibly music.
 ====
 TODO
 ====
-Function to determine location of each poly of each piece
-  Use this to avoid conflicts in spatial arrangement w/ board or pieces.
-
-Store locations of each piece's polys locally
-
-Store locations of each piece's polys globally (single large grid)
-  This will need to be done during piece placement
-
-Cannot exit selection unless piece is placed fully within/fully outside the play
-area. An on-screen message should appear if there is any discrepancy.
+Use getNewPolyLocs to avoid conflicts in spatial arrangement w/ board or pieces.
 
 On-screen timer (stopwatch)
   Stops when blocks are in an acceptable arrangement
+
+Sounds
 
 
 ==========

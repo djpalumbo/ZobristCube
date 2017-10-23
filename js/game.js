@@ -14,113 +14,136 @@ var selection;
 var level = [];
 var currLvl;
 
-var playArea = [];
-var boardArr = [];
-var board;
+var playArea = []; // Global matrix that holds locations of each piece's poly
+var ROWS = 17;
+var COLS = 31;
 
 var pieces = [];
 var attr = [];
-var scale = 4;
+var scale = 4; // Don't change this
 var space = 2*scale;
 
 var mode = "M"; // "M" = movement, "R" = rotation
+var rtns = []; // A graph of possible rotations from any particular position
 
 var w, w_, a, a_, s, s_, d, d_, spacebar, spacebar_, h, h_;
 w_ = a_ = s_ = d_ = spacebar_ = h_ = false;
-
-var rtns = []; // A graph of possible rotations from any particular position
-
 var help = false;
 
 
-function createPlayArea(lvl)
-{
-  // Actual board mesh, a visual aid for the player
-  board = new THREE.Mesh(new THREE.BoxGeometry(level[lvl].z*space,
-    level[lvl].x*space, scale), new THREE.MeshLambertMaterial({color:
-      0xffffff}));
-
-  board.castShadow = board.receiveShadow = true;
-
-  board.position.y = -(scale/2 + 0.015625);
-  board.rotation.x = 3*Math.PI/2;
-
-  scene.add(board);
-
-  // Matrix that will help determine when cube is finished
-  for (var i = 0; i < level[lvl].y; i++)
-  {
-    boardArr.push([]);
-
-    for (var j = 0; j < level[lvl].x; j++)
-    {
-      boardArr[i].push([]);
-
-      for (var k = 0; k < level[lvl].z; k++)
-        boardArr[i][j].push(false);
-    }
-  }
-}
-
-function getInitLocs()
+function removeFromPlayArea(piece)
 {
   ;
 }
 
-function addPiece(piece, x, z)
+function addToPlayArea(piece)
 {
-  var loader = new THREE.OBJLoader();
-
-  loader.load("models/" + piece + ".obj", function (object)
-    {
-      pieces.push(object);
-      object.scale.set(scale, scale, scale);
-      object.position.y = 0;
-      object.position.x = x;
-      object.position.z = z;
-
-      object.name = piece;
-
-      // Note: object.children[0] is the THREE.Mesh
-      object.children[0].material = new THREE.MeshStandardMaterial(
-        {color: attr[piece].color, opacity: 0.5, transparent: true});
-
-      object.children[0].castShadow = true;
-      object.children[0].receiveShadow = true;
-
-      object.children[0].rotation.y = 3*Math.PI/2;
-
-      object.rotn = 0;
-      object.polyLocs = attr[object.name].dimens;
-      getPolyLocs(object);
-
-      scene.add(object);
-    });
+  ;
 }
 
-function getPolyLocs(piece)
+function getNewPolyLocs(piece, dir) // Returns locals only
 {
-  console.log("Piece " + piece.name + ":");
-  var str = "";
-
-  for (var i = 0; i < piece.polyLocs.length; i++)
+  switch (mode)
   {
-    for (var j = 0; j < piece.polyLocs[i].length; j++)
-    {
-      for (var k = 0; k < piece.polyLocs[i][j].length; k++)
+    case "M":
+      switch (dir)
       {
-        str += (piece.polyLocs[i][j][k] ? "X " : "O ");
-
-        // Do important things
+        case "FW":
+          for (var i = 0; i < piece.polyLocs.length; i++)
+            for (var j = 0; j < piece.polyLocs[i].length; j++)
+              for (var k = 0; k < piece.polyLocs[i][j].length; k++)
+                if (piece.polyLocs[i][j][k])
+                  piece.polyLocs[i][j][k].z--;
+          break;
+        case "BK":
+          for (var i = 0; i < piece.polyLocs.length; i++)
+            for (var j = 0; j < piece.polyLocs[i].length; j++)
+              for (var k = 0; k < piece.polyLocs[i][j].length; k++)
+                if (piece.polyLocs[i][j][k])
+                  piece.polyLocs[i][j][k].z++;
+          break;
+        case "LF":
+          for (var i = 0; i < piece.polyLocs.length; i++)
+            for (var j = 0; j < piece.polyLocs[i].length; j++)
+              for (var k = 0; k < piece.polyLocs[i][j].length; k++)
+                if (piece.polyLocs[i][j][k])
+                  piece.polyLocs[i][j][k].x--;
+          break;
+        case "RT":
+          for (var i = 0; i < piece.polyLocs.length; i++)
+            for (var j = 0; j < piece.polyLocs[i].length; j++)
+              for (var k = 0; k < piece.polyLocs[i][j].length; k++)
+                if (piece.polyLocs[i][j][k])
+                  piece.polyLocs[i][j][k].x++;
+          break;
       }
+      break;
+    case "R":
+      switch (dir)
+      {
+        case "FW":
+          for (var i = 0; i < piece.polyLocs.length; i++)
+            for (var j = 0; j < piece.polyLocs[i].length; j++)
+              for (var k = 0; k < piece.polyLocs[i][j].length; k++)
+              {
+                if ((i === 0 && j === 0 && k === 0) || !piece.polyLocs[i][j][k])
+                  continue;
 
-      str += "\n";
-    }
+                var dy = piece.polyLocs[i][j][k].y - piece.polyLocs[0][0][0].y;
+                var dz = piece.polyLocs[i][j][k].z - piece.polyLocs[0][0][0].z;
 
-    str += "\n";
+                piece.polyLocs[i][j][k].y -= dy - dz;
+                piece.polyLocs[i][j][k].z -= dz + dy;
+              }
+          break;
+        case "BK":
+          for (var i = 0; i < piece.polyLocs.length; i++)
+            for (var j = 0; j < piece.polyLocs[i].length; j++)
+              for (var k = 0; k < piece.polyLocs[i][j].length; k++)
+              {
+                if ((i === 0 && j === 0 && k === 0) || !piece.polyLocs[i][j][k])
+                  continue;
+
+                var dy = piece.polyLocs[i][j][k].y - piece.polyLocs[0][0][0].y;
+                var dz = piece.polyLocs[i][j][k].z - piece.polyLocs[0][0][0].z;
+
+                piece.polyLocs[i][j][k].y -= dy + dz;
+                piece.polyLocs[i][j][k].z -= dz - dy;
+              }
+          break;
+        case "LF":
+          for (var i = 0; i < piece.polyLocs.length; i++)
+            for (var j = 0; j < piece.polyLocs[i].length; j++)
+              for (var k = 0; k < piece.polyLocs[i][j].length; k++)
+              {
+                if ((i === 0 && j === 0 && k === 0) || !piece.polyLocs[i][j][k])
+                  continue;
+
+                var dx = piece.polyLocs[i][j][k].x - piece.polyLocs[0][0][0].x;
+                var dz = piece.polyLocs[i][j][k].z - piece.polyLocs[0][0][0].z;
+
+                piece.polyLocs[i][j][k].x -= dx - dz;
+                piece.polyLocs[i][j][k].z -= dz + dx;
+              }
+          break;
+        case "RT":
+          for (var i = 0; i < piece.polyLocs.length; i++)
+            for (var j = 0; j < piece.polyLocs[i].length; j++)
+              for (var k = 0; k < piece.polyLocs[i][j].length; k++)
+              {
+                if ((i === 0 && j === 0 && k === 0) || !piece.polyLocs[i][j][k])
+                  continue;
+
+                var dx = piece.polyLocs[i][j][k].x - piece.polyLocs[0][0][0].x;
+                var dz = piece.polyLocs[i][j][k].z - piece.polyLocs[0][0][0].z;
+
+                piece.polyLocs[i][j][k].x -= dx + dz;
+                piece.polyLocs[i][j][k].z -= dz - dx;
+              }
+          break;
+      }
+      break;
   }
-
-  console.log(str);
 }
 
 function rotatePiece(dir)
@@ -145,9 +168,17 @@ function rotatePiece(dir)
                                 rtns[selection.parent.rotn].y,
                                 rtns[selection.parent.rotn].z);
 
-  // Set new position
-  // If new position is invalid (underground, on other piece),
+  //removeFromPlayArea();
+
+  getNewPolyLocs(selection.parent, dir);
+
+  // If new position is invalid (out of bounds / in other piece),
   //   then raise y position
+
+  // Check if anything is below
+  // If all clear, move down
+
+  //addToPlayArea();
 }
 
 function movePiece(dir)
@@ -171,15 +202,25 @@ function movePiece(dir)
   console.log("M: (" + selection.parent.position.x + ", "
     + selection.parent.position.y + ", "
     + selection.parent.position.z + ")");
+
+  //removeFromPlayArea();
+
+  getNewPolyLocs(selection.parent, dir);
+
+  // If new position is invalid (out of bounds / in other piece),
+  //   then raise y position
+
+  // Check if anything is below
+  // If all clear, move down
+
+
+  //addToPlayArea();
 }
 
+// It's probably okay to remove this, since movePiece & rotatePiece make sure
+//   that each move is valid.
 function deselectPiece()
-{
-  // Check whether or not position is valid (i.e. halfway on/off board = bad)
-
-  // If OK, then deselect
-  selection = null;
-}
+{ selection = null; }
 
 function initGame()
 {
@@ -466,12 +507,98 @@ function selectLevel()
 
 function buildLevel()
 {
-  createPlayArea(currLvl);
-  createPieces(currLvl);
+  var pieceList = parseLevelPcs(level[currLvl].pcs);
+
+  createPlayArea(pieceList.length);
+  createPieces(pieceList);
+}
+
+function createPlayArea(numPieces)
+{
+  // Access via: playArea[y][z][x], i.e. [floor][row][col]
+
+  for (var i = 0; i < 3*numPieces; i++)
+  {
+    playArea.push([]);
+
+    for (var j = 0; j < ROWS; j++)
+    {
+      playArea[i].push([]);
+
+      for (var k = 0; k < COLS; k++)
+        playArea[i][j].push(false);
+    }
+  }
+}
+
+function addPiece(piece, x, z)
+{
+  var loader = new THREE.OBJLoader();
+
+  loader.load("models/" + piece + ".obj", function (object)
+    {
+      pieces.push(object);
+      object.scale.set(scale, scale, scale);
+      object.position.y = 0;
+      object.position.x = x*space;
+      object.position.z = z*space;
+
+      object.name = piece;
+
+      // Note: object.children[0] is the THREE.Mesh
+      object.children[0].material = new THREE.MeshStandardMaterial(
+        {color: attr[piece].color, opacity: 0.5, transparent: true});
+
+      object.children[0].castShadow = true;
+      object.children[0].receiveShadow = true;
+
+      // Rotate the mesh (not the group) for initial group orientation to stay
+      //   at (0, 0, 0). Very useful.
+      object.children[0].rotation.y = 3*Math.PI/2;
+
+      object.rotn = 0;
+      object.polyLocs = attr[object.name].dimens;
+      object.polyLocs[0][0][0] = {x:x, y:0, z:z};
+      getInitLocs(object);
+
+      scene.add(object);
+    });
+}
+
+function getInitLocs(object, piece)
+{
+  // Base other polyLocs (trues) off initial rotation
+  var origin = object.polyLocs[0][0][0];
+
+  // Create locals (object.polyLocs) and globals (playArea)
+  for (var i = 0; i < object.polyLocs.length; i++)
+    for (var j = 0; j < object.polyLocs[i].length; j++)
+      for (var k = 0; k < object.polyLocs[i][j].length; k++)
+      {
+        var x = Math.floor(COLS/2) + origin.x + k;
+        var y = object.polyLocs[0][0][0].y + i;
+        var z = Math.floor(ROWS/2) + origin.z + j;
+
+        if (object.polyLocs[i][j][k] === true
+            || object.polyLocs[i][j][k] === origin)
+        {
+          object.polyLocs[i][j][k] = {x:x, y:y, z:z}; // Local
+          playArea[y][z][x] = object.name; // Global
+        }
+      }
+}
+
+// May want to change placement later to make things a bit prettier
+function createPieces(pieceList)
+{
+  for (var i = 0; i < pieceList.length; i++)
+    addPiece(pieceList[i], i*3 - 9, -6);
 }
 
 function populateAttributes()
 {
+  // attr[...].dimens[y][z][x], i.e. [floor][row][col]
+
   var X = true, O = false;
 
   attr["a"] = {poly: 5,
@@ -652,14 +779,6 @@ function parseLevelPcs(pcs)
   return pieceList;
 }
 
-function createPieces(lvl)
-{
-  var pieceList = parseLevelPcs(level[lvl].pcs);
-
-  for (var i = 0; i < pieceList.length; i++)
-    addPiece(pieceList[i], i*3*space - 9*space, -6*space);
-}
-
 function populateRotations()
 {
   var pi = Math.PI;
@@ -713,10 +832,11 @@ function helpMenu()
   {
     document.getElementById('help').innerHTML =
       "<br><u>Objective</u>"
-      + "<br>Move the pieces onto"
-      + "<br>&nbspthe platform. Fit them"
-      + "<br>&nbspinto the correct"
-      + "<br>&nbspdimensions to win!</br>"
+      + "<br>Assemble the pieces into"
+      + "<br>&nbspthe shape of a box, the"
+      + "<br>&nbspdimensions of which are"
+      + "<br>&nbsplisted at the top of"
+      + "<br>&nbspthe screen</br>"
 
       + "<br><u>Controls</u>"
       + "<br>[Click] on a piece to"
@@ -733,5 +853,22 @@ function helpMenu()
   else
     document.getElementById('help').innerHTML =
       "Press [H] for help";
+}
+
+function printPolys(mx) // For debugging purposes
+{
+  var str = "";
+  for (var i = 0; i < mx.length; i++)
+  {
+    for (var j = 0; j < mx[i].length; j++)
+    {
+      for (var k = 0; k < mx[i][j].length; k++)
+        str += " " + (mx[i][j][k] != false ?
+          (mx[i][j][k] instanceof Object ? "*" : mx[i][j][k]) : " ");
+      str += "\n";
+    }
+    str += "-----\n";
+  }
+  console.log(str);
 }
 
