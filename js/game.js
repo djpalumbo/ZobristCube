@@ -19,7 +19,6 @@ var ROWS = 17;
 var COLS = 31;
 
 var pieces = [];
-var attr = [];
 var scale = 4; // Don't change this
 var space = 2*scale;
 
@@ -28,199 +27,12 @@ var rtns = []; // A graph of possible rotations from any particular position
 
 var w, w_, a, a_, s, s_, d, d_, spacebar, spacebar_, h, h_;
 w_ = a_ = s_ = d_ = spacebar_ = h_ = false;
-var help = false;
+var help = true;
 
+var whoosh, scooch, ding;
 
-function removeFromPlayArea(piece)
-{
-  ;
-}
+var gameOver = false;
 
-function addToPlayArea(piece)
-{
-  ;
-}
-
-function getNewPolyLocs(piece, dir) // Returns locals only
-{
-  switch (mode)
-  {
-    case "M":
-      switch (dir)
-      {
-        case "FW":
-          for (var i = 0; i < piece.polyLocs.length; i++)
-            for (var j = 0; j < piece.polyLocs[i].length; j++)
-              for (var k = 0; k < piece.polyLocs[i][j].length; k++)
-                if (piece.polyLocs[i][j][k])
-                  piece.polyLocs[i][j][k].z--;
-          break;
-        case "BK":
-          for (var i = 0; i < piece.polyLocs.length; i++)
-            for (var j = 0; j < piece.polyLocs[i].length; j++)
-              for (var k = 0; k < piece.polyLocs[i][j].length; k++)
-                if (piece.polyLocs[i][j][k])
-                  piece.polyLocs[i][j][k].z++;
-          break;
-        case "LF":
-          for (var i = 0; i < piece.polyLocs.length; i++)
-            for (var j = 0; j < piece.polyLocs[i].length; j++)
-              for (var k = 0; k < piece.polyLocs[i][j].length; k++)
-                if (piece.polyLocs[i][j][k])
-                  piece.polyLocs[i][j][k].x--;
-          break;
-        case "RT":
-          for (var i = 0; i < piece.polyLocs.length; i++)
-            for (var j = 0; j < piece.polyLocs[i].length; j++)
-              for (var k = 0; k < piece.polyLocs[i][j].length; k++)
-                if (piece.polyLocs[i][j][k])
-                  piece.polyLocs[i][j][k].x++;
-          break;
-      }
-      break;
-    case "R":
-      switch (dir)
-      {
-        case "FW":
-          for (var i = 0; i < piece.polyLocs.length; i++)
-            for (var j = 0; j < piece.polyLocs[i].length; j++)
-              for (var k = 0; k < piece.polyLocs[i][j].length; k++)
-              {
-                if ((i === 0 && j === 0 && k === 0) || !piece.polyLocs[i][j][k])
-                  continue;
-
-                var dy = piece.polyLocs[i][j][k].y - piece.polyLocs[0][0][0].y;
-                var dz = piece.polyLocs[i][j][k].z - piece.polyLocs[0][0][0].z;
-
-                piece.polyLocs[i][j][k].y -= dy - dz;
-                piece.polyLocs[i][j][k].z -= dz + dy;
-              }
-          break;
-        case "BK":
-          for (var i = 0; i < piece.polyLocs.length; i++)
-            for (var j = 0; j < piece.polyLocs[i].length; j++)
-              for (var k = 0; k < piece.polyLocs[i][j].length; k++)
-              {
-                if ((i === 0 && j === 0 && k === 0) || !piece.polyLocs[i][j][k])
-                  continue;
-
-                var dy = piece.polyLocs[i][j][k].y - piece.polyLocs[0][0][0].y;
-                var dz = piece.polyLocs[i][j][k].z - piece.polyLocs[0][0][0].z;
-
-                piece.polyLocs[i][j][k].y -= dy + dz;
-                piece.polyLocs[i][j][k].z -= dz - dy;
-              }
-          break;
-        case "LF":
-          for (var i = 0; i < piece.polyLocs.length; i++)
-            for (var j = 0; j < piece.polyLocs[i].length; j++)
-              for (var k = 0; k < piece.polyLocs[i][j].length; k++)
-              {
-                if ((i === 0 && j === 0 && k === 0) || !piece.polyLocs[i][j][k])
-                  continue;
-
-                var dx = piece.polyLocs[i][j][k].x - piece.polyLocs[0][0][0].x;
-                var dz = piece.polyLocs[i][j][k].z - piece.polyLocs[0][0][0].z;
-
-                piece.polyLocs[i][j][k].x -= dx - dz;
-                piece.polyLocs[i][j][k].z -= dz + dx;
-              }
-          break;
-        case "RT":
-          for (var i = 0; i < piece.polyLocs.length; i++)
-            for (var j = 0; j < piece.polyLocs[i].length; j++)
-              for (var k = 0; k < piece.polyLocs[i][j].length; k++)
-              {
-                if ((i === 0 && j === 0 && k === 0) || !piece.polyLocs[i][j][k])
-                  continue;
-
-                var dx = piece.polyLocs[i][j][k].x - piece.polyLocs[0][0][0].x;
-                var dz = piece.polyLocs[i][j][k].z - piece.polyLocs[0][0][0].z;
-
-                piece.polyLocs[i][j][k].x -= dx + dz;
-                piece.polyLocs[i][j][k].z -= dz - dx;
-              }
-          break;
-      }
-      break;
-  }
-}
-
-function rotatePiece(dir)
-{
-  switch (dir)
-  {
-    case "FW":
-      selection.parent.rotn = rtns[selection.parent.rotn].FW;
-      break;
-    case "BK":
-      selection.parent.rotn = rtns[selection.parent.rotn].BK;
-      break;
-    case "LF":
-      selection.parent.rotn = rtns[selection.parent.rotn].LF;
-      break;
-    case "RT":
-      selection.parent.rotn = rtns[selection.parent.rotn].RT;
-      break;
-  }
-
-  selection.parent.rotation.set(rtns[selection.parent.rotn].x,
-                                rtns[selection.parent.rotn].y,
-                                rtns[selection.parent.rotn].z);
-
-  //removeFromPlayArea();
-
-  getNewPolyLocs(selection.parent, dir);
-
-  // If new position is invalid (out of bounds / in other piece),
-  //   then raise y position
-
-  // Check if anything is below
-  // If all clear, move down
-
-  //addToPlayArea();
-}
-
-function movePiece(dir)
-{
-  switch (dir)
-  {
-    case "FW":
-      selection.parent.position.z -= space;
-      break;
-    case "BK":
-      selection.parent.position.z += space;
-      break;
-    case "LF":
-      selection.parent.position.x -= space;
-      break;
-    case "RT":
-      selection.parent.position.x += space;
-      break;
-  }
-
-  console.log("M: (" + selection.parent.position.x + ", "
-    + selection.parent.position.y + ", "
-    + selection.parent.position.z + ")");
-
-  //removeFromPlayArea();
-
-  getNewPolyLocs(selection.parent, dir);
-
-  // If new position is invalid (out of bounds / in other piece),
-  //   then raise y position
-
-  // Check if anything is below
-  // If all clear, move down
-
-
-  //addToPlayArea();
-}
-
-// It's probably okay to remove this, since movePiece & rotatePiece make sure
-//   that each move is valid.
-function deselectPiece()
-{ selection = null; }
 
 function initGame()
 {
@@ -231,7 +43,6 @@ function initGame()
   populateLevels();
   selectLevel();
 
-  populateAttributes();
   buildLevel();
 
   setupCamera();
@@ -244,8 +55,7 @@ function initGame()
   createControls();
   setupRaycaster();
 
-  //loadSounds();
-  //playMusic()
+  loadSounds();
 
   document.getElementById("game").appendChild(renderer.domElement);
 
@@ -260,6 +70,31 @@ function render()
   keyboardControls();
 
   raycast();
+
+  if (gameOver)
+  {
+    for (var i = 0; i < pieces.length; i++)
+      pieces[i].children[0].material.transparent = false;
+
+    ding.play();
+    selection = null;
+    gameOver = false;
+    currLvl++;
+
+    if (currLvl < level.length)
+      setTimeout(function ()
+        {
+          while (pieces.length > 0)
+          {
+            scene.remove(pieces[0]);
+
+            removeFromPlayArea(pieces[0]);
+            pieces.splice(0, 1);
+          }
+
+          createPieces(parseLevelPcs(level[currLvl].pcs));
+        }, 3000);
+  }
 
   requestAnimationFrame(render);
   renderer.render(scene, camera);
@@ -363,7 +198,7 @@ function keyboardControls()
     if (Key.isDown(Key.ESC))
     {
       var currSel = selection;
-      deselectPiece();
+      selection = null; // Deselect piece
 
       if (!selection)
         currSel.material.transparent = true;
@@ -428,7 +263,7 @@ function onDocumentMouseDown(event)
   else if (!hover && selection)
   {
     var currSel = selection;
-    deselectPiece();
+      selection = null; // Deselect piece
 
     if (!selection)
       currSel.material.transparent = true;
@@ -437,7 +272,7 @@ function onDocumentMouseDown(event)
   {
     var currSel = selection;
 
-    deselectPiece();
+      selection = null; // Deselect piece
 
     if (!selection)
     {
@@ -547,7 +382,7 @@ function addPiece(piece, x, z)
 
       // Note: object.children[0] is the THREE.Mesh
       object.children[0].material = new THREE.MeshStandardMaterial(
-        {color: attr[piece].color, opacity: 0.5, transparent: true});
+        {color: getAttributes(piece).color, opacity: 0.65, transparent: true});
 
       object.children[0].castShadow = true;
       object.children[0].receiveShadow = true;
@@ -557,7 +392,7 @@ function addPiece(piece, x, z)
       object.children[0].rotation.y = 3*Math.PI/2;
 
       object.rotn = 0;
-      object.polyLocs = attr[object.name].dimens;
+      object.polyLocs = getAttributes(object.name).dimens;
       object.polyLocs[0][0][0] = {x:x, y:0, z:z};
       getInitLocs(object);
 
@@ -588,6 +423,316 @@ function getInitLocs(object, piece)
       }
 }
 
+function rotatePiece(dir, recurs)
+{
+  switch (dir)
+  {
+    case "FW":
+      selection.parent.rotn = rtns[selection.parent.rotn].FW;
+      break;
+    case "BK":
+      selection.parent.rotn = rtns[selection.parent.rotn].BK;
+      break;
+    case "LF":
+      selection.parent.rotn = rtns[selection.parent.rotn].LF;
+      break;
+    case "RT":
+      selection.parent.rotn = rtns[selection.parent.rotn].RT;
+      break;
+  }
+
+  selection.parent.rotation.set(rtns[selection.parent.rotn].x,
+                                rtns[selection.parent.rotn].y,
+                                rtns[selection.parent.rotn].z);
+
+  removeFromPlayArea(selection.parent);
+
+  getNewPolyLocs(selection.parent, "R", dir);
+
+  var fix = isInBounds(selection.parent);
+  if (fix != true)
+    movePiece(fix, true);
+
+  if (!isValidLoc(selection.parent))
+    movePiece("UP", true);
+  else if (canFall(selection.parent))
+    movePiece("DN", true);
+
+  addToPlayArea(selection.parent);
+
+  whoosh.play();
+  gameOver = checkGameOver();
+}
+
+function movePiece(dir, recurs)
+{
+  if (recurs === undefined)
+    recurs = false;
+
+  switch (dir)
+  {
+    case "FW":
+      selection.parent.position.z -= space;
+      break;
+    case "BK":
+      selection.parent.position.z += space;
+      break;
+    case "LF":
+      selection.parent.position.x -= space;
+      break;
+    case "RT":
+      selection.parent.position.x += space;
+      break;
+    case "UP":
+      selection.parent.position.y += space + 0.015625;
+      break;
+    case "DN":
+      selection.parent.position.y -= space + 0.015625;
+      break;
+  }
+
+  if (!recurs)
+    removeFromPlayArea(selection.parent);
+
+  getNewPolyLocs(selection.parent, "M", dir);
+
+  var fix = isInBounds(selection.parent);
+  if (fix != true)
+    movePiece(fix, true);
+
+  if (!isValidLoc(selection.parent))
+    movePiece("UP", true);
+  else if (canFall(selection.parent))
+    movePiece("DN", true);
+
+  if (!recurs)
+  {
+    addToPlayArea(selection.parent);
+
+    scooch.play();
+
+    gameOver = checkGameOver();
+  }
+}
+
+function getNewPolyLocs(piece, mode, dir) // Returns locals only
+{
+  switch (mode)
+  {
+    case "M":
+      switch (dir)
+      {
+        case "FW":
+          for (var i = 0; i < piece.polyLocs.length; i++)
+            for (var j = 0; j < piece.polyLocs[i].length; j++)
+              for (var k = 0; k < piece.polyLocs[i][j].length; k++)
+                if (piece.polyLocs[i][j][k])
+                  piece.polyLocs[i][j][k].z--;
+          break;
+        case "BK":
+          for (var i = 0; i < piece.polyLocs.length; i++)
+            for (var j = 0; j < piece.polyLocs[i].length; j++)
+              for (var k = 0; k < piece.polyLocs[i][j].length; k++)
+                if (piece.polyLocs[i][j][k])
+                  piece.polyLocs[i][j][k].z++;
+          break;
+        case "LF":
+          for (var i = 0; i < piece.polyLocs.length; i++)
+            for (var j = 0; j < piece.polyLocs[i].length; j++)
+              for (var k = 0; k < piece.polyLocs[i][j].length; k++)
+                if (piece.polyLocs[i][j][k])
+                  piece.polyLocs[i][j][k].x--;
+          break;
+        case "RT":
+          for (var i = 0; i < piece.polyLocs.length; i++)
+            for (var j = 0; j < piece.polyLocs[i].length; j++)
+              for (var k = 0; k < piece.polyLocs[i][j].length; k++)
+                if (piece.polyLocs[i][j][k])
+                  piece.polyLocs[i][j][k].x++;
+          break;
+        case "UP":
+          for (var i = 0; i < piece.polyLocs.length; i++)
+            for (var j = 0; j < piece.polyLocs[i].length; j++)
+              for (var k = 0; k < piece.polyLocs[i][j].length; k++)
+                if (piece.polyLocs[i][j][k])
+                  piece.polyLocs[i][j][k].y++;
+          break;
+        case "DN":
+          for (var i = 0; i < piece.polyLocs.length; i++)
+            for (var j = 0; j < piece.polyLocs[i].length; j++)
+              for (var k = 0; k < piece.polyLocs[i][j].length; k++)
+                if (piece.polyLocs[i][j][k])
+                  piece.polyLocs[i][j][k].y--;
+          break;
+      }
+      break;
+    case "R":
+      switch (dir)
+      {
+        case "FW":
+          for (var i = 0; i < piece.polyLocs.length; i++)
+            for (var j = 0; j < piece.polyLocs[i].length; j++)
+              for (var k = 0; k < piece.polyLocs[i][j].length; k++)
+              {
+                if ((i === 0 && j === 0 && k === 0) || !piece.polyLocs[i][j][k])
+                  continue;
+
+                var dy = piece.polyLocs[i][j][k].y - piece.polyLocs[0][0][0].y;
+                var dz = piece.polyLocs[i][j][k].z - piece.polyLocs[0][0][0].z;
+
+                piece.polyLocs[i][j][k].y -= dy - dz;
+                piece.polyLocs[i][j][k].z -= dz + dy;
+              }
+          break;
+        case "BK":
+          for (var i = 0; i < piece.polyLocs.length; i++)
+            for (var j = 0; j < piece.polyLocs[i].length; j++)
+              for (var k = 0; k < piece.polyLocs[i][j].length; k++)
+              {
+                if ((i === 0 && j === 0 && k === 0) || !piece.polyLocs[i][j][k])
+                  continue;
+
+                var dy = piece.polyLocs[i][j][k].y - piece.polyLocs[0][0][0].y;
+                var dz = piece.polyLocs[i][j][k].z - piece.polyLocs[0][0][0].z;
+
+                piece.polyLocs[i][j][k].y -= dy + dz;
+                piece.polyLocs[i][j][k].z -= dz - dy;
+              }
+          break;
+        case "LF":
+          for (var i = 0; i < piece.polyLocs.length; i++)
+            for (var j = 0; j < piece.polyLocs[i].length; j++)
+              for (var k = 0; k < piece.polyLocs[i][j].length; k++)
+              {
+                if ((i === 0 && j === 0 && k === 0) || !piece.polyLocs[i][j][k])
+                  continue;
+
+                var dx = piece.polyLocs[i][j][k].x - piece.polyLocs[0][0][0].x;
+                var dz = piece.polyLocs[i][j][k].z - piece.polyLocs[0][0][0].z;
+
+                piece.polyLocs[i][j][k].x -= dx - dz;
+                piece.polyLocs[i][j][k].z -= dz + dx;
+              }
+          break;
+        case "RT":
+          for (var i = 0; i < piece.polyLocs.length; i++)
+            for (var j = 0; j < piece.polyLocs[i].length; j++)
+              for (var k = 0; k < piece.polyLocs[i][j].length; k++)
+              {
+                if ((i === 0 && j === 0 && k === 0) || !piece.polyLocs[i][j][k])
+                  continue;
+
+                var dx = piece.polyLocs[i][j][k].x - piece.polyLocs[0][0][0].x;
+                var dz = piece.polyLocs[i][j][k].z - piece.polyLocs[0][0][0].z;
+
+                piece.polyLocs[i][j][k].x -= dx + dz;
+                piece.polyLocs[i][j][k].z -= dz - dx;
+              }
+          break;
+      }
+      break;
+  }
+}
+
+function removeFromPlayArea(piece)
+{
+  for (var i = 0; i < piece.polyLocs.length; i++)
+    for (var j = 0; j < piece.polyLocs[i].length; j++)
+      for (var k = 0; k < piece.polyLocs[i][j].length; k++)
+        if (piece.polyLocs[i][j][k])
+        {
+          var x = piece.polyLocs[i][j][k].x;
+          var y = piece.polyLocs[i][j][k].y;
+          var z = piece.polyLocs[i][j][k].z;
+
+          playArea[y][z][x] = false;
+        }
+}
+
+function addToPlayArea(piece)
+{
+  for (var i = 0; i < piece.polyLocs.length; i++)
+    for (var j = 0; j < piece.polyLocs[i].length; j++)
+      for (var k = 0; k < piece.polyLocs[i][j].length; k++)
+        if (piece.polyLocs[i][j][k])
+        {
+          var x = piece.polyLocs[i][j][k].x;
+          var y = piece.polyLocs[i][j][k].y;
+          var z = piece.polyLocs[i][j][k].z;
+
+          playArea[y][z][x] = piece.name;
+        }
+}
+
+function isInBounds(piece)
+{
+  for (var i = 0; i < piece.polyLocs.length; i++)
+    for (var j = 0; j < piece.polyLocs[i].length; j++)
+      for (var k = 0; k < piece.polyLocs[i][j].length; k++)
+        if (piece.polyLocs[i][j][k] != false)
+        {
+          if (piece.polyLocs[i][j][k].z > -1 && piece.polyLocs[i][j][k].z < ROWS)
+          {
+            if (piece.polyLocs[i][j][k].x > -1 && piece.polyLocs[i][j][k].x < COLS)
+            {
+              if (piece.polyLocs[i][j][k].y > -1)
+                continue;
+              else
+                return "UP";
+            }
+            else if (piece.polyLocs[i][j][k].x > -1)
+              return "LF";
+            else // if (piece.polyLocs[i][j][k].x < COLS)
+              return "RT";
+          }
+          else if (piece.polyLocs[i][j][k].z > -1)
+            return "FW";
+          else // if (piece.polyLocs[i][j][k].z < ROWS)
+            return "BK";
+        }
+
+  return true;
+}
+
+function isValidLoc(piece)
+{
+  for (var i = 0; i < piece.polyLocs.length; i++)
+    for (var j = 0; j < piece.polyLocs[i].length; j++)
+      for (var k = 0; k < piece.polyLocs[i][j].length; k++)
+        if (piece.polyLocs[i][j][k] != false)
+        {
+          var x = piece.polyLocs[i][j][k].x;
+          var y = piece.polyLocs[i][j][k].y;
+          var z = piece.polyLocs[i][j][k].z;
+
+          if (playArea[y][z][x] != false)
+            return false;
+        }
+
+  return true;
+}
+
+function canFall(piece)
+{
+  for (var i = 0; i < piece.polyLocs.length; i++)
+    for (var j = 0; j < piece.polyLocs[i].length; j++)
+      for (var k = 0; k < piece.polyLocs[i][j].length; k++)
+        if (piece.polyLocs[i][j][k] != false)
+        {
+          if (piece.polyLocs[i][j][k].y <= 0)
+            return false;
+
+          var x = piece.polyLocs[i][j][k].x;
+          var y = piece.polyLocs[i][j][k].y - 1;
+          var z = piece.polyLocs[i][j][k].z;
+
+          if (playArea[y][z][x] != false)
+            return false;
+        }
+
+  return true;
+}
+
 // May want to change placement later to make things a bit prettier
 function createPieces(pieceList)
 {
@@ -595,173 +740,109 @@ function createPieces(pieceList)
     addPiece(pieceList[i], i*3 - 9, -6);
 }
 
-function populateAttributes()
+function getAttributes(pc)
 {
-  // attr[...].dimens[y][z][x], i.e. [floor][row][col]
-
   var X = true, O = false;
 
-  attr["a"] = {poly: 5,
-               color: "red",
-               dimens: [[[X, X],
-                         [X],
-                         [X]],
-
-                        [[],
-                         [X]]]};
-  attr["b"] = {poly: 5,
-               color: "yellow",
-               dimens: [[[X, X],
-                         [X]],
-
-                        [[],
-                         [X],
-                         [X]]]};
-  attr["c"] = {poly: 5,
-               color: "yellow",
-               dimens: [[[X],
-                         [X],
-                         [X]],
-
-                        [[X, X]]]};
-  attr["d"] = {poly: 5,
-               color: "yellow",
-               dimens: [[[X, X],
-                         [X],
-                         [X]],
-
-                        [[X]]]};
-  attr["e"] = {poly: 5,
-               color: "yellow",
-               dimens: [[[X],
-                         [X, X],
-                         [X]],
-
-                        [[],
-                         [O, X]]]};
-  attr["f"] = {poly: 5,
-               color: "blue",
-               dimens: [[[X, X],
-                         [X],
-                         [X]],
-
-                        [[O, X]]]};
-  attr["g"] = {poly: 5,
-               color: "blue",
-               dimens: [[[X],
-                         [X, X]],
-
-                        [[],
-                         [X],
-                         [X]]]};
-  attr["h"] = {poly: 5,
-               color: "blue",
-               dimens: [[[X],
-                         [X, X],
-                         [X]],
-
-                        [[X]]]};
-  attr["i"] = {poly: 5,
-               color: "yellow",
-               dimens: [[[X],
-                         [X, X],
-                         [O, X]],
-
-                        [[],
-                         [X]]]};
-  attr["j"] = {poly: 5,
-               color: "red",
-               dimens: [[[X],
-                         [X, X],
-                         [O, X]],
-
-                        [[X]]]};
-  attr["k"] = {poly: 5,
-               color: "blue",
-               dimens: [[[X],
-                         [X, X],
-                         []],
-
-                        [[],
-                         [O, X],
-                         [O, X]]]};
-  attr["l"] = {poly: 5,
-               color: "red",
-               dimens: [[[X],
-                         [X]],
-
-                        [[],
-                         [X, X],
-                         [O, X]]]};
-  attr["m"] = {poly: 5,
-               color: "red",
-               dimens: [[[X],
-                         [X, X],
-                         [X]],
-
-                        [[],
-                         [X]]]};
-  attr["n"] = {poly: 5,
-               color: "blue",
-               dimens: [[[X, X],
-                         [X],
-                         [X]],
-
-                        [[],
-                         [],
-                         [X]]]};
-  attr["o"] = {poly: 5,
-               color: "red",
-               dimens: [[[X],
-                         [X],
-                         [X, X]],
-
-                        [[X]]]};
-  attr["r"] = {poly: 4,
-               color: "green",
-               dimens: [[[X, X],
-                         [X]],
-
-                        [[],
-                         [X]]]};
-  attr["s"] = {poly: 4,
-               color: "tan",
-               dimens: [[[X, X],
-                         [X]],
-
-                        [[O, X]]]};
-  attr["t"] = {poly: 4,
-               color: "green",
-               dimens: [[[X, X],
-                         [X],
-                         [X]]]};
-  attr["u"] = {poly: 4,
-               color: "green",
-               dimens: [[[X],
-                         [X, X],
-                         [X]]]};
-  attr["v"] = {poly: 4,
-               color: "tan",
-               dimens: [[[X],
-                         [X, X],
-                         [O, X]]]};
-  attr["w"] = {poly: 4,
-               color: "tan",
-               dimens: [[[X, X],
-                         [X]],
-
-                        [[X]]]};
-  attr["z"] = {poly: 3,
-               color: "tan",
-               dimens: [[[X, X],
-                         [X]]]};
-  attr["2"] = {poly: 2,
-               color: "tan",
-               dimens: [[[X],
-                         [X]]]};
-  attr["1"] = {poly: 1,
-               color: "tan",
-               dimens: [[[X]]]};
+  switch (pc)
+  {
+    case "a":
+      return {poly: 5,
+              color: "red",
+              dimens: [[[X, X], [X], [X]], [[], [X]]]};
+    case "b":
+      return {poly: 5,
+              color: "yellow",
+              dimens: [[[X, X], [X]], [[], [X], [X]]]};
+    case "c":
+      return {poly: 5,
+              color: "yellow",
+              dimens: [[[X], [X], [X]], [[X, X]]]};
+    case "d":
+      return {poly: 5,
+              color: "yellow",
+              dimens: [[[X, X], [X], [X]], [[X]]]};
+    case "e":
+      return {poly: 5,
+              color: "yellow",
+              dimens: [[[X], [X, X], [X]], [[], [O, X]]]};
+    case "f":
+      return {poly: 5,
+              color: "blue",
+              dimens: [[[X, X], [X], [X]], [[O, X]]]};
+    case "g":
+      return {poly: 5,
+              color: "blue",
+              dimens: [[[X], [X, X]], [[], [X], [X]]]};
+    case "h":
+      return {poly: 5,
+              color: "blue",
+              dimens: [[[X], [X, X], [X]], [[X]]]};
+    case "i":
+      return {poly: 5,
+              color: "yellow",
+              dimens: [[[X], [X, X], [O, X]], [[], [X]]]};
+    case "j":
+      return {poly: 5,
+              color: "red",
+              dimens: [[[X], [X, X], [O, X]], [[X]]]};
+    case "k":
+      return {poly: 5,
+              color: "blue",
+              dimens: [[[X], [X, X], []], [[], [O, X], [O, X]]]};
+    case "l":
+      return {poly: 5,
+              color: "red",
+              dimens: [[[X], [X]], [[], [X, X], [O, X]]]};
+    case "m":
+      return {poly: 5,
+              color: "red",
+              dimens: [[[X], [X, X], [X]], [[], [X]]]};
+    case "n":
+      return {poly: 5,
+              color: "blue",
+              dimens: [[[X, X], [X], [X]], [[], [], [X]]]};
+    case "o":
+      return {poly: 5,
+              color: "red",
+              dimens: [[[X], [X], [X, X]], [[X]]]};
+    case "r":
+      return {poly: 4,
+              color: "green",
+              dimens: [[[X, X], [X]], [[], [X]]]};
+    case "s":
+      return {poly: 4,
+              color: "tan",
+              dimens: [[[X, X], [X]], [[O, X]]]};
+    case "t":
+      return {poly: 4,
+              color: "green",
+              dimens: [[[X, X], [X], [X]]]};
+    case "u":
+      return {poly: 4,
+              color: "green",
+              dimens: [[[X], [X, X], [X]]]};
+    case "v":
+      return {poly: 4,
+              color: "tan",
+              dimens: [[[X], [X, X], [O, X]]]};
+    case "w":
+      return {poly: 4,
+              color: "tan",
+              dimens: [[[X, X], [X]], [[X]]]};
+    case "z":
+      return {poly: 3,
+              color: "tan",
+              dimens: [[[X, X], [X]]]};
+    case "2":
+      return {poly: 2,
+              color: "tan",
+              dimens: [[[X], [X]]]};
+    case "1":
+      return {poly: 1,
+              color: "tan",
+              dimens: [[[X]]]};
+  }
 }
 
 function parseLevelPcs(pcs)
@@ -814,6 +895,68 @@ function populateRotations()
   rtns.push({x:0,      y:0,      z:pi/2,   RT:20, LF:22, BK:5,  FW:15}); //23
 }
 
+// This does not account for instances where the dimensions are correct, but
+//   they are rotated
+function checkGameOver()
+{
+  var lf = pieces[0].polyLocs[0][0][0].x;
+  var rt = pieces[0].polyLocs[0][0][0].x;
+  var dn = pieces[0].polyLocs[0][0][0].y;
+  var up = pieces[0].polyLocs[0][0][0].y;
+  var fw = pieces[0].polyLocs[0][0][0].z;
+  var bk = pieces[0].polyLocs[0][0][0].z;
+
+  // Preliminary check
+  for (var i = 1; i < pieces.length; i++)
+  {
+    if (pieces[i].polyLocs[0][0][0].x < lf)
+      lf = pieces[i].polyLocs[0][0][0].x;
+    if (pieces[i].polyLocs[0][0][0].x > rt)
+      rt = pieces[i].polyLocs[0][0][0].x;
+    if (pieces[i].polyLocs[0][0][0].y < dn)
+      dn = pieces[i].polyLocs[0][0][0].y;
+    if (pieces[i].polyLocs[0][0][0].y > up)
+      up = pieces[i].polyLocs[0][0][0].y;
+    if (pieces[i].polyLocs[0][0][0].z < fw)
+      fw = pieces[i].polyLocs[0][0][0].z;
+    if (pieces[i].polyLocs[0][0][0].z > bk)
+      bk = pieces[i].polyLocs[0][0][0].z;
+  }
+
+  if (rt - lf + 1 > level[currLvl].x
+      || up - dn + 1 > level[currLvl].y
+      || bk - fw + 1 > level[currLvl].z)
+    return false;
+
+  // Serious check
+  for (var pc = 0; i < pieces.length; i++)
+    for (var i = 0; i < pieces[pc].polyLocs.length; i++)
+      for (var j = 0; j < pieces[pc].polyLocs[i].length; j++)
+        for (var k = 0; k < pieces[pc].polyLocs[i][j].length; k++)
+          if (pieces[pc].polyLocs[i][j][k] != false)
+          {
+            if (pieces[i].polyLocs[i][i][i].x < lf)
+              lf = pieces[i].polyLocs[i][i][i].x;
+            if (pieces[i].polyLocs[i][i][i].x > rt)
+              rt = pieces[i].polyLocs[i][i][i].x;
+            if (pieces[i].polyLocs[i][i][i].y < dn)
+              dn = pieces[i].polyLocs[i][i][i].y;
+            if (pieces[i].polyLocs[i][i][i].y > up)
+              up = pieces[i].polyLocs[i][i][i].y;
+            if (pieces[i].polyLocs[i][i][i].z < fw)
+              fw = pieces[i].polyLocs[i][i][i].z;
+            if (pieces[i].polyLocs[i][i][i].z > bk)
+              bk = pieces[i].polyLocs[i][i][i].z;
+          }
+
+  if (rt - lf + 1 > level[currLvl].x
+      || up - dn + 1 > level[currLvl].y
+      || bk - fw + 1 > level[currLvl].z)
+    return false;
+
+  return true;
+}
+
 function updateInfoPane()
 {
   document.getElementById("info").innerHTML =
@@ -858,7 +1001,7 @@ function helpMenu()
 function printPolys(mx) // For debugging purposes
 {
   var str = "";
-  for (var i = 0; i < mx.length; i++)
+  for (var i = 0; i < 3/*mx.length*/; i++)
   {
     for (var j = 0; j < mx[i].length; j++)
     {
@@ -870,5 +1013,12 @@ function printPolys(mx) // For debugging purposes
     str += "-----\n";
   }
   console.log(str);
+}
+
+function loadSounds()
+{
+  whoosh = new Audio("sounds/whoosh.wav");
+  scooch = new Audio("sounds/scooch.wav");
+  ding = new Audio("sounds/ding.wav");
 }
 
